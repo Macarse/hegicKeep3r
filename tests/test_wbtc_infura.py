@@ -10,7 +10,9 @@ def test_wbtc(HegicKeep3r, deployer, alice, bob):
     hegicOptions = Contract.from_explorer(hegicKeep3r.wbtcOptions())
 
     # Buy WBTC call @ 2k for tomorrow
-    tx = hegicOptions.create(24 * 3600, 1, 2000, 2, {"from": bob, "value": bob.balance()})
+    tx = hegicOptions.create(
+        24 * 3600, 1, 2000, 2, {"from": bob, "value": bob.balance()}
+    )
     optionId = tx.events["Create"]["id"]
 
     assert hegicKeep3r.wbtcOptionUnlockable(optionId) == False

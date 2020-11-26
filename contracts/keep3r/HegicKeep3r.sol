@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.8;
+pragma solidity >=0.6.12;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelinV3/contracts/math/SafeMath.sol";
@@ -14,14 +14,22 @@ import "./Keep3rAbstract.sol";
 contract HegicKeep3r is Governable, CollectableDust, Keep3r, IHegicKeep3r {
     using SafeMath for uint256;
 
-    address public ethOptions = address(0xEfC0eEAdC1132A12c9487d800112693bf49EcfA2);
-    address public wbtcOptions = address(0x3961245DB602eD7c03eECcda33eA3846bD8723BD);
+    address public keep3rHelper;
+    address public slidingOracle;
+    address public ethOptions;
+    address public wbtcOptions;
 
-    constructor(address _keep3r) public Governable(msg.sender) CollectableDust() Keep3r(_keep3r) {}
-
-    function setKeep3r(address _keep3r) external override onlyGovernor {
-        _setKeep3r(_keep3r);
-        emit Keep3rSet(_keep3r);
+    constructor(
+        address _keep3r,
+        address _keep3rHelper,
+        address _slidingOracle,
+        address _ethOptions,
+        address _wbtcOptions
+    ) public Governable(msg.sender) CollectableDust() Keep3r(_keep3r) {
+        keep3rHelper = _keep3rHelper;
+        slidingOracle = _slidingOracle;
+        ethOptions = _ethOptions;
+        wbtcOptions = _wbtcOptions;
     }
 
     // Getters
@@ -30,22 +38,44 @@ contract HegicKeep3r is Governable, CollectableDust, Keep3r, IHegicKeep3r {
     }
 
     function ethOptionUnlockable(uint256 _optionId) external override view returns (bool) {
-        Option memory option = IHegic(ethOptions).options(_optionId);
-        return option.state == State.Active && option.expiration < block.timestamp;
+        // Option memory option = IHegic(ethOptions).options(_optionId);
+        // return option.state == State.Active && option.expiration < block.timestamp;
+        return false;
     }
 
     function wbtcOptionUnlockable(uint256 _optionId) external override view returns (bool) {
-        Option memory option = IHegic(wbtcOptions).options(_optionId);
-        return option.state == State.Active && option.expiration < block.timestamp;
+        // Option memory option = IHegic(wbtcOptions).options(_optionId);
+        // return option.state == State.Active && option.expiration < block.timestamp;
+        return false;
     }
 
     // Keep3r actions
     function ethUnlock(uint256 _optionId) external override paysKeeper {
-        IHegic(ethOptions).unlock(_optionId);
+        //IHegic(ethOptions).unlock(_optionId);
     }
 
     function wbtcUnlock(uint256 _optionId) external override paysKeeper {
-        IHegic(wbtcOptions).unlock(_optionId);
+        //IHegic(wbtcOptions).unlock(_optionId);
+    }
+
+    // Helpers
+    function ethCalculateTotalUnlock(uint256[] calldata optionIDs) external override view returns (uint256) {
+        return _calculateTotalUnlock(ethOptions, optionIDs);
+    }
+
+    function _calculateTotalUnlock(address hegic, uint256[] calldata optionIDs) internal view returns (uint256) {
+        uint256 len = optionIDs.length;
+        uint256 totalUnlock = 0;
+
+        for (uint256 i = 0; i < len; i++) {
+            Option memory option = IHegic(hegic).options(optionIDs[i]);
+            require(option.state == State.Active && option.expiration < block.timestamp);
+
+            totalUnlock += option.lockedAmount;
+            totalUnlock += option.premium;
+        }
+
+        return totalUnlock;
     }
 
     // Governable
@@ -55,6 +85,21 @@ contract HegicKeep3r is Governable, CollectableDust, Keep3r, IHegicKeep3r {
 
     function acceptGovernor() external override onlyPendingGovernor {
         _acceptGovernor();
+    }
+
+    function setKeep3r(address _keep3r) external override onlyGovernor {
+        _setKeep3r(_keep3r);
+        emit Keep3rSet(_keep3r);
+    }
+
+    function setKeep3rHelper(address _keep3rHelper) external override onlyGovernor {
+        keep3rHelper = _keep3rHelper;
+        emit Keep3rHelperSet(_keep3rHelper);
+    }
+
+    function setSlidingOracle(address _slidingOracle) external override onlyGovernor {
+        slidingOracle = _slidingOracle;
+        emit SlidingOracleSet(_slidingOracle);
     }
 
     // Collectable Dust

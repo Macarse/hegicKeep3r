@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.8;
+pragma solidity >=0.6.12;
 pragma experimental ABIEncoderV2;
 
 enum State {Inactive, Active, Exercised, Expired}
@@ -18,8 +18,8 @@ struct Option {
 
 interface IHegic {
 
-    function unlock(uint256) external;
+    function unlockAll(uint256[] calldata optionsIDs) external;
 
-    function options(uint) external view returns (Option memory);
+    function options(uint256) external view returns (Option memory);
 
 }
