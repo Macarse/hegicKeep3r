@@ -8,7 +8,7 @@ import "../../interfaces/hegic/IHegic.sol";
 //ethOptions = address(0xEfC0eEAdC1132A12c9487d800112693bf49EcfA2);
 //wbtcOptions = address(0x3961245DB602eD7c03eECcda33eA3846bD8723BD);
 
-contract MockedHegicOptions is IHegicOptions {
+contract MockHegicOptions is IHegicOptions {
 
     Option[] public mockedOptions;
     address public mockedPool;

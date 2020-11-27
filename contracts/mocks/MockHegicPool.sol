@@ -8,7 +8,7 @@ import "../../interfaces/hegic/IHegic.sol";
 //ethPool = address(0x878F15ffC8b894A1BA7647c7176E4C01f74e140b);
 //wbtcPool = address(0x20dd9e22d22dd0a6ef74a520cb08303b5fad5de7);
 
-contract MockedHegicPool is IHegicPool {
+contract MockHegicPool is IHegicPool {
 
     uint256 public mockedTotalBalance;
     uint256 public mockedAvailableBalance;

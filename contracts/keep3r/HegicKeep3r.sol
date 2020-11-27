@@ -4,8 +4,10 @@ pragma experimental ABIEncoderV2;
 
 import "@openzeppelinV3/contracts/math/SafeMath.sol";
 
-import "../../interfaces/Keep3r/IHegicKeep3r.sol";
 import "../../interfaces/hegic/IHegic.sol";
+import "../../interfaces/Keep3r/IHegicKeep3r.sol";
+import "../../interfaces/IKeep3rV1Helper.sol";
+import "../../interfaces/IUniswapV2SlidingOracle.sol";
 import "../utils/Governable.sol";
 import "../utils/CollectableDust.sol";
 
@@ -18,18 +20,24 @@ contract HegicKeep3r is Governable, CollectableDust, Keep3r, IHegicKeep3r {
     address public slidingOracle;
     address public ethOptions;
     address public wbtcOptions;
+    uint256 public unlockGasCost;
+
+    address public constant KP3R = address(0x1cEB5cB57C4D4E2b2433641b95Dd330A33185A44);
+    address public constant WETH = address(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
 
     constructor(
         address _keep3r,
         address _keep3rHelper,
         address _slidingOracle,
         address _ethOptions,
-        address _wbtcOptions
+        address _wbtcOptions,
+        uint256 _unlockGasCost
     ) public Governable(msg.sender) CollectableDust() Keep3r(_keep3r) {
         keep3rHelper = _keep3rHelper;
         slidingOracle = _slidingOracle;
         ethOptions = _ethOptions;
         wbtcOptions = _wbtcOptions;
+        unlockGasCost = _unlockGasCost;
     }
 
     // Getters
@@ -59,6 +67,13 @@ contract HegicKeep3r is Governable, CollectableDust, Keep3r, IHegicKeep3r {
     }
 
     // Helpers
+    function ethCallCost(uint256 optionsQty) external override view returns (uint256) {
+        require(optionsQty > 0);
+
+        uint256 kp3rCallCost = IKeep3rV1Helper(keep3rHelper).getQuoteLimit(optionsQty.mul(unlockGasCost));
+        return IUniswapV2SlidingOracle(slidingOracle).current(KP3R, kp3rCallCost, WETH);
+    }
+
     function ethPoolUsage() external override view returns (uint256) {
         return _poolUsage(ethOptions);
     }
@@ -110,6 +125,11 @@ contract HegicKeep3r is Governable, CollectableDust, Keep3r, IHegicKeep3r {
 
     function acceptGovernor() external override onlyPendingGovernor {
         _acceptGovernor();
+    }
+
+    function setUnlockGasCost(uint256 _unlockGasCost) external override onlyGovernor {
+        unlockGasCost = _unlockGasCost;
+        emit UnlockGasCostSet(_unlockGasCost);
     }
 
     function setKeep3r(address _keep3r) external override onlyGovernor {
