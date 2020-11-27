@@ -26,6 +26,8 @@ def mockHegicOptions(deployer, MockHegicOptions, mockHegicPool):
 def hegicKeep3r(deployer, HegicKeep3r, mockHegicOptions, mockKeep3rHelper, oracle):
     kp3r = "0x1ceb5cb57c4d4e2b2433641b95dd330a33185a44"
     unlockGasCost = 175_000
+    unlockValueMultiplier = 10
+
     yield deployer.deploy(
         HegicKeep3r,
         kp3r,
@@ -34,4 +36,5 @@ def hegicKeep3r(deployer, HegicKeep3r, mockHegicOptions, mockKeep3rHelper, oracl
         mockHegicOptions,
         mockHegicOptions,
         unlockGasCost,
+        unlockValueMultiplier,
     )

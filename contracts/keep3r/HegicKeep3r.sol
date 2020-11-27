@@ -20,7 +20,9 @@ contract HegicKeep3r is Governable, CollectableDust, Keep3r, IHegicKeep3r {
     address public slidingOracle;
     address public ethOptions;
     address public wbtcOptions;
+
     uint256 public unlockGasCost;
+    uint256 public unlockValueMultiplier;
 
     address public constant KP3R = address(0x1cEB5cB57C4D4E2b2433641b95Dd330A33185A44);
     address public constant WETH = address(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
@@ -31,13 +33,15 @@ contract HegicKeep3r is Governable, CollectableDust, Keep3r, IHegicKeep3r {
         address _slidingOracle,
         address _ethOptions,
         address _wbtcOptions,
-        uint256 _unlockGasCost
+        uint256 _unlockGasCost,
+        uint256 _unlockValueMultiplier
     ) public Governable(msg.sender) CollectableDust() Keep3r(_keep3r) {
         keep3rHelper = _keep3rHelper;
         slidingOracle = _slidingOracle;
         ethOptions = _ethOptions;
         wbtcOptions = _wbtcOptions;
         unlockGasCost = _unlockGasCost;
+        unlockValueMultiplier = _unlockValueMultiplier;
     }
 
     // Getters
@@ -67,6 +71,10 @@ contract HegicKeep3r is Governable, CollectableDust, Keep3r, IHegicKeep3r {
     }
 
     // Helpers
+    function unlockValue(uint256 totalUnlock) external override view returns (uint256) {
+        return totalUnlock.mul(unlockValueMultiplier).div(100);
+    }
+
     function ethCallCost(uint256 optionsQty) external override view returns (uint256) {
         require(optionsQty > 0);
 
@@ -125,6 +133,13 @@ contract HegicKeep3r is Governable, CollectableDust, Keep3r, IHegicKeep3r {
 
     function acceptGovernor() external override onlyPendingGovernor {
         _acceptGovernor();
+    }
+
+    // Setters
+    function setUnlockValueMultiplier(uint256 _unlockValueMultiplier) external override onlyGovernor {
+        require(_unlockValueMultiplier > 0 && _unlockValueMultiplier < 100);
+        unlockValueMultiplier = _unlockValueMultiplier;
+        emit UnlockValueMultiplierSet(_unlockValueMultiplier);
     }
 
     function setUnlockGasCost(uint256 _unlockGasCost) external override onlyGovernor {

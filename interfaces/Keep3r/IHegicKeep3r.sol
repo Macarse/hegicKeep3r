@@ -6,6 +6,7 @@ interface IHegicKeep3r {
     event Keep3rHelperSet(address keep3rHelper);
     event SlidingOracleSet(address slidingOracle);
     event UnlockGasCostSet(uint256 unlockGasCost);
+    event UnlockValueMultiplierSet(uint256 unlockValueMultiplier);
 
     // Actions by Keeper
     event EthOptionUnlockedByKeeper(uint256 _optionId);
@@ -16,6 +17,7 @@ interface IHegicKeep3r {
     function setKeep3rHelper(address _keep3rHelper) external;
     function setSlidingOracle(address _slidingOracle) external;
     function setUnlockGasCost(uint256 _unlockGasCost) external;
+    function setUnlockValueMultiplier(uint256 _unlockValueMultiplier) external;
 
     // Getters
     function ethOptionUnlockable(uint256 _optionId) external view returns (bool);
@@ -26,6 +28,7 @@ interface IHegicKeep3r {
     function wbtcUnlock(uint256 _optionId) external;
 
     // Helpers
+    function unlockValue(uint256 totalUnlock) external view returns (uint256);
     function ethCallCost(uint256 optionsQty) external view returns (uint256);
     function ethPoolUsage() external view returns (uint256);
     function wbtcPoolUsage() external view returns (uint256);
