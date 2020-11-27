@@ -16,7 +16,15 @@ struct Option {
     OptionType optionType;
 }
 
-interface IHegic {
+interface IHegicPool {
+    function totalBalance() external view returns (uint256 amount);
+
+    function availableBalance() external view returns (uint256 amount);
+}
+
+interface IHegicOptions {
+
+    function pool() external view returns (address poolAddress);
 
     function unlockAll(uint256[] calldata optionsIDs) external;
 

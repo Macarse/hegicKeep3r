@@ -8,9 +8,26 @@ import "../../interfaces/hegic/IHegic.sol";
 //ethOptions = address(0xEfC0eEAdC1132A12c9487d800112693bf49EcfA2);
 //wbtcOptions = address(0x3961245DB602eD7c03eECcda33eA3846bD8723BD);
 
-contract MockedHegicOptions is IHegic {
+contract MockedHegicOptions is IHegicOptions {
 
     Option[] public mockedOptions;
+    address public mockedPool;
+
+    constructor(address _pool) public {
+        mockedPool = _pool;
+    }
+
+    function pool() external override view returns (address poolAddress) {
+        return mockedPool;
+    }
+
+    function unlockAll(uint256[] calldata optionsIDs) external override {
+
+    }
+
+    function options(uint256 optionId) external override view returns (Option memory) {
+        return mockedOptions[optionId];
+    }
 
     // Mock helpers
     function addOption(uint256 lockedAmount, uint256 premium) external {
@@ -41,13 +58,5 @@ contract MockedHegicOptions is IHegic {
       );
 
       mockedOptions.push(option);
-    }
-
-    function unlockAll(uint256[] calldata optionsIDs) external override {
-
-    }
-
-    function options(uint256 optionId) external override view returns (Option memory) {
-        return mockedOptions[optionId];
     }
 }

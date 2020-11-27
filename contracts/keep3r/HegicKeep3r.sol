@@ -59,16 +59,41 @@ contract HegicKeep3r is Governable, CollectableDust, Keep3r, IHegicKeep3r {
     }
 
     // Helpers
-    function ethCalculateTotalUnlock(uint256[] calldata optionIDs) external override view returns (uint256) {
-        return _calculateTotalUnlock(ethOptions, optionIDs);
+    function ethPoolUsage() external override view returns (uint256) {
+        return _poolUsage(ethOptions);
     }
 
-    function _calculateTotalUnlock(address hegic, uint256[] calldata optionIDs) internal view returns (uint256) {
+    function wbtcPoolUsage() external override view returns (uint256) {
+        return _poolUsage(wbtcOptions);
+    }
+
+    function _poolUsage(address hegic) internal view returns (uint256) {
+        address pool = IHegicOptions(ethOptions).pool();
+        uint256 availableBalance = IHegicPool(pool).availableBalance();
+        uint256 totalBalance = IHegicPool(pool).totalBalance();
+
+        // Shouldn't happen
+        if (totalBalance == 0) {
+            return 0;
+        }
+
+        return uint256(100).sub(availableBalance.mul(100).div(totalBalance));
+    }
+
+    function ethTotalUnlock(uint256[] calldata optionIDs) external override view returns (uint256) {
+        return _totalUnlock(ethOptions, optionIDs);
+    }
+
+    function wbtcTotalUnlock(uint256[] calldata optionIDs) external override view returns (uint256) {
+        return _totalUnlock(wbtcOptions, optionIDs);
+    }
+
+    function _totalUnlock(address hegic, uint256[] calldata optionIDs) internal view returns (uint256) {
         uint256 len = optionIDs.length;
         uint256 totalUnlock = 0;
 
         for (uint256 i = 0; i < len; i++) {
-            Option memory option = IHegic(hegic).options(optionIDs[i]);
+            Option memory option = IHegicOptions(hegic).options(optionIDs[i]);
             require(option.state == State.Active && option.expiration < block.timestamp);
 
             totalUnlock += option.lockedAmount;

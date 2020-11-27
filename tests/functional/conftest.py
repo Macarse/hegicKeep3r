@@ -2,8 +2,13 @@ import pytest
 
 
 @pytest.fixture
-def mockedHegicOptions(deployer, MockedHegicOptions):
-    yield deployer.deploy(MockedHegicOptions)
+def mockedHegicPool(deployer, MockedHegicPool):
+    yield deployer.deploy(MockedHegicPool)
+
+
+@pytest.fixture
+def mockedHegicOptions(deployer, MockedHegicOptions, mockedHegicPool):
+    yield deployer.deploy(MockedHegicOptions, mockedHegicPool)
 
 
 @pytest.fixture

@@ -24,7 +24,11 @@ interface IHegicKeep3r {
     function wbtcUnlock(uint256 _optionId) external;
 
     // Helpers
-    function ethCalculateTotalUnlock(uint256[] calldata optionIDs) external view returns (uint256);
+    function ethPoolUsage() external view returns (uint256);
+    function wbtcPoolUsage() external view returns (uint256);
+
+    function ethTotalUnlock(uint256[] calldata optionIDs) external view returns (uint256);
+    function wbtcTotalUnlock(uint256[] calldata optionIDs) external view returns (uint256);
 
     // Name of the Keep3r
     function name() external pure returns (string memory);
