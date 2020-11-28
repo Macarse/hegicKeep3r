@@ -20,16 +20,18 @@ interface IHegicKeep3r {
     function setUnlockValueMultiplier(uint256 _unlockValueMultiplier) external;
 
     // Getters
-    function ethOptionUnlockable(uint256 _optionId) external view returns (bool);
-    function wbtcOptionUnlockable(uint256 _optionId) external view returns (bool);
+    function ethOptionsUnlockable(uint256[] calldata optionIDs) external view returns (bool);
+    function wbtcOptionsUnlockable(uint256[] calldata optionIDs) external view returns (bool);
 
     // Keep3r actions
-    function ethUnlock(uint256 _optionId) external;
-    function wbtcUnlock(uint256 _optionId) external;
+    function ethUnlockAll(uint256[] calldata optionIDs) external;
+    function wbtcUnlockAll(uint256[] calldata optionIDs) external;
 
     // Helpers
+    function weightedUnlockValue(uint256 poolUsage, uint256 unlockValue) external view returns (uint256);
     function unlockValue(uint256 totalUnlock) external view returns (uint256);
     function ethCallCost(uint256 optionsQty) external view returns (uint256);
+    function wbtcCallCost(uint256 optionsQty) external view returns (uint256);
     function ethPoolUsage() external view returns (uint256);
     function wbtcPoolUsage() external view returns (uint256);
 

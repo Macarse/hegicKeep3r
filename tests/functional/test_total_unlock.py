@@ -19,5 +19,4 @@ def test_with_non_expired(hegicKeep3r, mockHegicOptions):
     mockHegicOptions.addOption(Wei("1 ether"), Wei("0.1 ether"))
     mockHegicOptions.addNonExpiredOption()
 
-    with brownie.reverts():
-        hegicKeep3r.ethTotalUnlock(list(range(2)))
+    assert hegicKeep3r.ethTotalUnlock(list(range(2))) == False

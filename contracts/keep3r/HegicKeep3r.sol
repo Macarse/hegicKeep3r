@@ -26,6 +26,7 @@ contract HegicKeep3r is Governable, CollectableDust, Keep3r, IHegicKeep3r {
 
     address public constant KP3R = address(0x1cEB5cB57C4D4E2b2433641b95Dd330A33185A44);
     address public constant WETH = address(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
+    address public constant WBTC = address(0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599);
 
     constructor(
         address _keep3r,
@@ -49,28 +50,57 @@ contract HegicKeep3r is Governable, CollectableDust, Keep3r, IHegicKeep3r {
         return "Hegic Keep3r";
     }
 
-    function ethOptionUnlockable(uint256 _optionId) external override view returns (bool) {
-        // Option memory option = IHegic(ethOptions).options(_optionId);
-        // return option.state == State.Active && option.expiration < block.timestamp;
-        return false;
+    function ethOptionsUnlockable(uint256[] calldata optionIDs) external override view returns (bool) {
+        uint256 _ethTotalUnlock = this.ethTotalUnlock(optionIDs);
+
+        // If _ethTotalUnlock is 0 that means that one of the options was
+        // not in the correct state.
+        if (_ethTotalUnlock == 0) {
+            return false;
+        }
+
+        uint256 _ethPoolUsage = this.ethPoolUsage();
+        uint256 _unlockValue = this.unlockValue(_ethTotalUnlock);
+        uint256 _callCost = this.ethCallCost(optionIDs.length);
+        uint256 _weightedUnlockValue = this.weightedUnlockValue(_ethPoolUsage, _unlockValue);
+
+        return _callCost <= _weightedUnlockValue;
     }
 
-    function wbtcOptionUnlockable(uint256 _optionId) external override view returns (bool) {
-        // Option memory option = IHegic(wbtcOptions).options(_optionId);
-        // return option.state == State.Active && option.expiration < block.timestamp;
-        return false;
+    function wbtcOptionsUnlockable(uint256[] calldata optionIDs) external override view returns (bool) {
+        uint256 _wbtcTotalUnlock = this.wbtcTotalUnlock(optionIDs);
+
+        // If _wbtcTotalUnlock is 0 that means that one of the options was
+        // not in the correct state.
+        if (_wbtcTotalUnlock == 0) {
+            return false;
+        }
+
+        uint256 _wbtcPoolUsage = this.wbtcPoolUsage();
+        uint256 _unlockValue = this.unlockValue(_wbtcTotalUnlock);
+        uint256 _callCost = this.wbtcCallCost(optionIDs.length);
+        uint256 _weightedUnlockValue = this.weightedUnlockValue(_wbtcPoolUsage, _unlockValue);
+
+        return _callCost <= _weightedUnlockValue;
     }
 
     // Keep3r actions
-    function ethUnlock(uint256 _optionId) external override paysKeeper {
-        //IHegic(ethOptions).unlock(_optionId);
+    function ethUnlockAll(uint256[] calldata optionIDs) external override paysKeeper {
+        require(this.ethOptionsUnlockable(optionIDs));
+        IHegicOptions(ethOptions).unlockAll(optionIDs);
     }
 
-    function wbtcUnlock(uint256 _optionId) external override paysKeeper {
-        //IHegic(wbtcOptions).unlock(_optionId);
+    function wbtcUnlockAll(uint256[] calldata optionIDs) external override paysKeeper {
+      require(this.wbtcOptionsUnlockable(optionIDs));
+      IHegicOptions(wbtcOptions).unlockAll(optionIDs);
     }
 
     // Helpers
+    function weightedUnlockValue(uint256 poolUsage, uint256 unlockValue) external override view returns (uint256) {
+        require(poolUsage <= 80);
+        return poolUsage.mul(unlockValue).div(80);
+    }
+
     function unlockValue(uint256 totalUnlock) external override view returns (uint256) {
         return totalUnlock.mul(unlockValueMultiplier).div(100);
     }
@@ -80,6 +110,11 @@ contract HegicKeep3r is Governable, CollectableDust, Keep3r, IHegicKeep3r {
 
         uint256 kp3rCallCost = IKeep3rV1Helper(keep3rHelper).getQuoteLimit(optionsQty.mul(unlockGasCost));
         return IUniswapV2SlidingOracle(slidingOracle).current(KP3R, kp3rCallCost, WETH);
+    }
+
+    function wbtcCallCost(uint256 optionsQty) external override view returns (uint256) {
+        uint256 ethCallCost = this.ethCallCost(optionsQty);
+        return IUniswapV2SlidingOracle(slidingOracle).current(WETH, ethCallCost, WBTC);
     }
 
     function ethPoolUsage() external override view returns (uint256) {
@@ -117,7 +152,11 @@ contract HegicKeep3r is Governable, CollectableDust, Keep3r, IHegicKeep3r {
 
         for (uint256 i = 0; i < len; i++) {
             Option memory option = IHegicOptions(hegic).options(optionIDs[i]);
-            require(option.state == State.Active && option.expiration < block.timestamp);
+
+            // if one of the options is not active or not expired, do not continue
+            if (option.state != State.Active || option.expiration >= block.timestamp) {
+                return 0;
+            }
 
             totalUnlock += option.lockedAmount;
             totalUnlock += option.premium;
