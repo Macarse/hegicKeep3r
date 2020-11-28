@@ -113,8 +113,8 @@ contract HegicKeep3r is Governable, CollectableDust, Keep3r, IHegicKeep3r {
     }
 
     function wbtcCallCost(uint256 optionsQty) external override view returns (uint256) {
-        uint256 ethCallCost = this.ethCallCost(optionsQty);
-        return IUniswapV2SlidingOracle(slidingOracle).current(WETH, ethCallCost, WBTC);
+        uint256 _ethCallCost = this.ethCallCost(optionsQty);
+        return IUniswapV2SlidingOracle(slidingOracle).current(WETH, _ethCallCost, WBTC);
     }
 
     function ethPoolUsage() external override view returns (uint256) {
@@ -126,7 +126,7 @@ contract HegicKeep3r is Governable, CollectableDust, Keep3r, IHegicKeep3r {
     }
 
     function _poolUsage(address hegic) internal view returns (uint256) {
-        address pool = IHegicOptions(ethOptions).pool();
+        address pool = IHegicOptions(hegic).pool();
         uint256 availableBalance = IHegicPool(pool).availableBalance();
         uint256 totalBalance = IHegicPool(pool).totalBalance();
 
