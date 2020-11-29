@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.8;
+pragma solidity >=0.6.12;
 pragma experimental ABIEncoderV2;
 
 enum State {Inactive, Active, Exercised, Expired}
@@ -16,10 +16,18 @@ struct Option {
     OptionType optionType;
 }
 
-interface IHegic {
+interface IHegicPool {
+    function totalBalance() external view returns (uint256 amount);
 
-    function unlock(uint256) external;
+    function availableBalance() external view returns (uint256 amount);
+}
 
-    function options(uint) external view returns (Option memory);
+interface IHegicOptions {
+
+    function pool() external view returns (address poolAddress);
+
+    function unlockAll(uint256[] calldata optionsIDs) external;
+
+    function options(uint256) external view returns (Option memory);
 
 }
